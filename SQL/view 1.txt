@@ -1,0 +1,17 @@
+-- View que permite a segurança das informações sobre o curso
+
+CREATE VIEW curso_info AS(SELECT
+	nome_curso,
+	ementa,
+	nome_disciplina,
+	o.dia_semana,
+	o.horario,
+	CONCAT(f.nome, f.e-mail) AS professor
+FROM curso c
+INNER JOIN disciplina d ON c.cod_curso = d.cod_curso
+INNER JOIN oferecimento o ON d.cod_disciplina = o.cod_disciplina
+INNER JOIN semestre s ON o.cod_semestre = s.cod_semestre
+INNER JOIN funcionario f ON o.cod_professor = f.cod_professor
+GROUP BY (c.cod_curso, d.cod_disciplina)
+);
+

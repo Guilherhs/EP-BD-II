@@ -1,0 +1,80 @@
+INSERT INTO semestre (cod_semestre, data_inicio, data_fim) VALUES
+(1, '2019-02-01', '2019-07-01');
+
+INSERT INTO public.disciplina(cod_disciplina, cod_curso, nome_disciplina) VALUES
+(10001, 1, 'Introdução à Programação'),
+(10002, 2, 'Introdução ao Marketing');
+
+INSERT INTO public.oferecimento(cod_semestre, cod_disciplina, cod_espaço, cod_professor, dia_semana, horario) VALUES
+(1, 10001, 1, 791, 2, '19:00'),
+(1, 10002, 2, 336, 3, '19:00'),
+(1, 10003, 12, 575, 4, '19:00'),
+(1, 10004, 13, 108, 5, '19:00'),
+(1, 10005, 15, 289, 6, '19:00');
+
+-- Ao cadastrar um novo graduando, automaticamente o matricula em uma matéria inicial a depender do curso. 
+Não é obrigatório um curso ter uma disciplina inicial
+
+-- Solução implementada no SGBD
+
+CREATE OR REPLACE FUNCTION matricula_novo_aluno() RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO realiza_matricula (cod_aluno, cod_disciplina, cod_semestre, "timestamp")
+    SELECT NEW.cod_graduando, oferecimento.cod_disciplina, oferecimento.cod_semestre, CURRENT_TIMESTAMP
+    FROM oferecimento
+    WHERE cod_semestre = 1 AND cod_disciplina IN (
+        SELECT 
+        CASE
+            WHEN cod_curso = 1 THEN 10001
+            WHEN cod_curso = 2 THEN 10002
+            WHEN cod_curso = 3 THEN 10003
+            WHEN cod_curso = 4 THEN 10004
+            WHEN cod_curso = 5 THEN 10005
+        END
+        FROM curso
+        WHERE cod_curso = NEW.cod_curso
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- O trigger para que a função seja executada sempre que for inserido um novo aluno
+
+CREATE TRIGGER novo_aluno AFTER INSERT ON graduando
+FOR EACH ROW
+EXECUTE PROCEDURE matricula_novo_aluno()
+
+-- Casos para serem usados para teste
+
+-- Inserir um aluno do curso 1 deve inserir uma entrada com a disciplina 10001 na tabela realiza_matricula
+INSERT INTO graduando(cod_graduando, cod_curso)
+VALUES (820, 1)
+
+-- Inserir um aluno do curso 2 deve inserir uma entrada com a disciplina 10002 na tabela realiza_matricula
+INSERT INTO graduando(cod_graduando, cod_curso)
+VALUES (943, 2)
+
+-- Inserir um aluno de qualquer outro curso não deve alterar a tabela realiza_matricula
+INSERT INTO graduando(cod_graduando, cod_curso)
+VALUES (737, 3)
+
+-- Solução textual de SQL PADRÃO
+
+-- CREATE TRIGGER novo_aluno AFTER INSERT ON graduando
+-- REFERENCING NEW ROW AS nrow
+-- FOR EACH ROW
+-- BEGIN ATOMIC
+--    INSERT INTO realiza_matricula (cod_aluno, cod_disciplina, cod_semestre, "timestamp")
+--    SELECT nrow.cod_graduando, oferecimento.cod_disciplina, oferecimento.cod_semestre, CURRENT_TIMESTAMP
+--    FROM oferecimento
+--    WHERE cod_semestre = 1 AND cod_disciplina IN ( 
+--        SELECT CASE
+--            WHEN cod_curso = 1 THEN 10001
+--            WHEN cod_curso = 2 THEN 10002
+--            WHEN cod_curso = 3 THEN 10003
+--            WHEN cod_curso = 4 THEN 10004
+--            WHEN cod_curso = 5 THEN 10005
+--        END
+--        FROM curso
+--    );
+-- END;

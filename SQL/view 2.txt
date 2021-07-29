@@ -1,0 +1,19 @@
+-- View que exibe consultas sobre as participações dos alunos na universidade
+
+CREATE VIEW info_aluno AS (
+	SELECT
+		a.nome,
+		a.ano_ingresso,
+		ca.e-mail,
+		c.nome_curso,
+		ic.tema,
+		ge.nome_grupo
+	FROM disciplina d
+	INNER JOIN curso c ON d.cod_curso = c.cod_curso
+	INNER JOIN aluno a ON c.cod_aluno = a.cod_aluno
+	INNER JOIN cadastro ca ON a.endereco = ca.endereco
+	INNER JOIN iniciacao_cientifica ic ON  a.cod_iniciacao = ic.cod_iniciacao
+	INNER JOIN grupo_extensao ge ON a.cod_grupo = ge.cod_grupo
+);
+
+	
