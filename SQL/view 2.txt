@@ -4,16 +4,17 @@ CREATE VIEW info_aluno AS (
 	SELECT
 		a.nome,
 		a.ano_ingresso,
-		ca.e-mail,
-		c.nome_curso,
-		ic.tema,
+		ca.cidade
+		nome_curso,
+		art.tema,
 		ge.nome_grupo
-	FROM disciplina d
-	INNER JOIN curso c ON d.cod_curso = c.cod_curso
-	INNER JOIN aluno a ON c.cod_aluno = a.cod_aluno
-	INNER JOIN cadastro ca ON a.endereco = ca.endereco
-	INNER JOIN iniciacao_cientifica ic ON  a.cod_iniciacao = ic.cod_iniciacao
-	INNER JOIN grupo_extensao ge ON a.cod_grupo = ge.cod_grupo
+	FROM aluno a
+	LEFT JOIN graduacao g ON g.cod_graduacao = a.graduacao
+	LEFT JOIN curso c ON c.cod_curso = g.cod_curso
+	LEFT JOIN disciplina d ON d.cod_curso = c.cod_curso
+	LEFT JOIN cadastro ca ON a.cod_cidade_nascimento = ca.cod_cidade
+	LEFT JOIN autor aut ON aut.cod_aluno = a.cod_aluno
+	LEFT JOIN artigo art ON  art.cod_artigo = aut.cod_artigo
+	LEFT JOIN membro m ON m.cod_aluno = a.cod_aluno
+	LEFT JOIN grupo_extensao ge ON ge.cod_grupo = m.cod_grupo
 );
-
-	
