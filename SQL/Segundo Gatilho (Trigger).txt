@@ -1,0 +1,53 @@
+--Ao cadastrar novo dependente, é adicionado um bônus salarial de 300 reais. Só pode ter esse bônus para no máximo 3 filhos
+
+-- Solução implementada no SGBD
+
+CREATE OR REPLACE FUNCTION adiciona_bonus_dependente() RETURNS TRIGGER AS $$
+BEGIN
+    IF 3 > (SELECT count(*) FROM dependente where cod_funcionario = NEW.cod_funcionario) THEN
+       UPDATE funcionario
+       SET salario = salario + 200
+       WHERE cod_funcionario = NEW.cod_funcionario;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- O trigger que vai executar sempre que for inserido um novo dependente.
+
+CREATE TRIGGER bonus_dependente AFTER INSERT ON dependente
+FOR EACH ROW
+EXECUTE PROCEDURE adiciona_bonus_dependente();
+
+-- Casos de teste.
+
+-- Irá inserir os dependentes do funcionário, mas não irá adicionar o bonûs de 300 reais para nenhum dos dependentes
+INSERT INTO public.dependente (cod_funcionario,cod_dependente,nome,relacionamento) VALUES 
+(123,1,'alberto','each','filho')
+,(123,2,'carlos','each','filho')
+,(123,3,'jonas','each','filho')
+,(123,4,'guilherme','each','filho')
+
+-- Irá inserir os dependentes do funcionário, mas não irá adicionar o bonûs de 300 reais
+INSERT INTO public.dependente (cod_funcionario,cod_dependente,nome,relacionamento) VALUES 
+(123,5,'Paulo','each','filho')
+
+-- Irá inserir os dependentes do funcionário, conjuntamente com seu bônus de 900 reais
+INSERT INTO public.dependente (cod_funcionario,cod_dependente,nome,relacionamento) VALUES 
+(124,6,'cheila','each','filho')
+(124,7,'fernanda','each','filho')
+(124,8,'gabriel','each','filho')
+
+-- Solução textual de SQL PADRÃO
+
+-- CREATE TRIGGER bonus_dependente AFTER INSERT ON dependente
+-- REFERENCING NEW ROW AS nrow
+-- FOR EACH ROW
+-- BEGIN ATOMIC
+--	IF 3 > (SELECT count(*) FROM dependente where cod_funcionario = NEW.cod_funcionario) THEN
+--       UPDATE funcionario
+--       SET salario = salario + 300
+--       WHERE cod_funcionario = NEW.cod_funcionario;
+--    END IF;
+--    RETURN NEW;
+-- END;
